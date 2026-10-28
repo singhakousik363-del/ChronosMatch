@@ -43,5 +43,26 @@ class TestRingBuffer(unittest.TestCase):
                     buffer.write_order(1, 9, 10000, 1)
 
 
+    def test_buffer_reuses_slots_after_reading(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = str(Path(directory) / "orders.bin")
+
+            with RingBuffer(path, capacity=2) as buffer:
+                buffer.write_order(1, RingBuffer.BUY, 10000, 1)
+                buffer.write_order(2, RingBuffer.SELL, 10100, 2)
+
+                first = buffer.read_order()
+                self.assertEqual(first["order_id"], 1)
+
+                buffer.write_order(3, RingBuffer.BUY, 10200, 3)
+
+                second = buffer.read_order()
+                third = buffer.read_order()
+
+                self.assertEqual(second["order_id"], 2)
+                self.assertEqual(third["order_id"], 3)
+                self.assertIsNone(buffer.read_order())
+
+
 if __name__ == "__main__":
     unittest.main()

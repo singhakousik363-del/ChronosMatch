@@ -54,5 +54,41 @@ class TestOrderBook(unittest.TestCase):
             self.book.submit_order(Order(2, "SELL", 100, 0))
 
 
+    def test_partial_fill_across_multiple_resting_orders(self):
+        self.book.submit_order(Order(1, "SELL", 100, 2))
+        self.book.submit_order(Order(2, "SELL", 100, 3))
+
+        trades = self.book.submit_order(Order(3, "BUY", 100, 4))
+
+        self.assertEqual(
+            [(trade.sell_order_id, trade.quantity) for trade in trades],
+            [(1, 2), (2, 2)],
+        )
+        self.assertEqual(self.book.best_ask(), 100)
+        self.assertEqual(self.book.asks[100][0].order_id, 2)
+        self.assertEqual(self.book.asks[100][0].quantity, 1)
+
+    def test_better_price_has_priority_over_older_worse_price(self):
+        self.book.submit_order(Order(1, "SELL", 102, 2))
+        self.book.submit_order(Order(2, "SELL", 101, 2))
+
+        trades = self.book.submit_order(Order(3, "BUY", 102, 1))
+
+        self.assertEqual(len(trades), 1)
+        self.assertEqual(trades[0].sell_order_id, 2)
+        self.assertEqual(trades[0].price, 101)
+        self.assertEqual(trades[0].quantity, 1)
+
+    def test_non_crossing_order_remains_available(self):
+        self.book.submit_order(Order(1, "BUY", 100, 5))
+        trades = self.book.submit_order(Order(2, "SELL", 101, 3))
+
+        self.assertEqual(trades, [])
+        self.assertEqual(self.book.best_bid(), 100)
+        self.assertEqual(self.book.best_ask(), 101)
+        self.assertEqual(self.book.bids[100][0].quantity, 5)
+        self.assertEqual(self.book.asks[101][0].quantity, 3)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -44,3 +44,18 @@ python3 -m unittest discover -s tests -v
 This is a prototype for learning and demonstrating order matching
 and buffer-to-engine integration. It is not production-ready
 trading infrastructure.
+## Run the Order Book Benchmark
+
+Run the basic in-memory order-book throughput benchmark:
+
+```bash
+python3 benchmarks/benchmark_order_book.py
+```
+
+To choose a different number of matched order pairs:
+
+```bash
+python3 benchmarks/benchmark_order_book.py --pairs 50000
+```
+
+The benchmark reports elapsed time and approximate order-processing throughput. Results depend on the machine and runtime environment. This microbenchmark does not measure ring-buffer or end-to-end pipeline latency, and it is not evidence of production HFT performance.
