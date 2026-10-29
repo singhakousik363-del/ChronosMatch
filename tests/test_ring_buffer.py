@@ -1,3 +1,4 @@
+
 import tempfile
 import unittest
 from pathlib import Path
@@ -6,6 +7,7 @@ from src.ring_buffer import RingBuffer
 
 
 class TestRingBuffer(unittest.TestCase):
+
     def test_write_and_read_order(self):
         with tempfile.TemporaryDirectory() as directory:
             path = str(Path(directory) / "orders.bin")
@@ -22,6 +24,7 @@ class TestRingBuffer(unittest.TestCase):
                         "quantity": 5,
                     },
                 )
+
                 self.assertIsNone(buffer.read_order())
 
     def test_full_buffer_rejects_extra_order(self):
@@ -42,6 +45,13 @@ class TestRingBuffer(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     buffer.write_order(1, 9, 10000, 1)
 
+    def test_negative_order_id_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = str(Path(directory) / "orders.bin")
+
+            with RingBuffer(path) as buffer:
+                with self.assertRaises(ValueError):
+                    buffer.write_order(-1, RingBuffer.BUY, 10000, 1)
 
     def test_buffer_reuses_slots_after_reading(self):
         with tempfile.TemporaryDirectory() as directory:
